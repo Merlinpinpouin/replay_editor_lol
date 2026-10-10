@@ -1,6 +1,6 @@
 [package]
 name = "lolclip"
-version = "0.2.0"
+version = "0.2.1"
 description = "Éditeur de replays League of Legends"
 authors = ["Merlinpinpouin"]
 edition = "2021"

@@ -113,6 +113,9 @@ class H(BaseHTTPRequestHandler):
                     cur["main"] = clients.is_main(cur["patch"])
                 return self._json({"current": cur, "install": job, "game": game.running(), "pipeline": pipeline.STATE,
                                    "launch": game.LAUNCH})
+            if u.path == "/api/version":  # l'appli de bureau ne réutilise qu'un moteur de sa version
+                from . import VERSION
+                return self._json({"version": VERSION, "pid": os.getpid()})
             if u.path == "/api/music":
                 return self._json(music.tracks())
             if u.path == "/api/settings":
@@ -178,6 +181,12 @@ class H(BaseHTTPRequestHandler):
                 os.makedirs(RENDERS, exist_ok=True)
                 os.startfile(RENDERS)
                 return self._json({"ok": True})
+            if u.path == "/api/shutdown":  # arrêt demandé par l'appli de bureau (moteur d'une autre version)
+                if pipeline.busy():
+                    return self._json({"ok": False, "error": "génération en cours"}, 409)
+                self._json({"ok": True})
+                threading.Thread(target=self.server.shutdown, daemon=True).start()
+                return None
             if u.path == "/api/close":
                 return self._json({"ok": game.close_replay()})
             if u.path == "/api/install":
