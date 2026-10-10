@@ -1,0 +1,27 @@
+# Vérifications sur chaque branche / pull request : le moteur Python se charge, l'appli Tauri compile.
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Moteur Python
+        run: |
+          pip install -r requirements.txt
+          python -c "import app.server, app.pipeline; print('ok')"
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+      - name: Application Tauri
+        working-directory: desktop/src-tauri
+        run: cargo check --locked
