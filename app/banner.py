@@ -3,16 +3,16 @@ région, emblème du rang dans un hexagone, puis une plaque sombre à bord doré
 et l'image du champion. Il apparaît en ~0.7 s, reste, puis s'efface.
 Rendu ici (PIL + numpy) en vidéo RGBA (ffv1) de la hauteur du bandeau, posée par ffmpeg (montage.assemble).
 Images : splash « centered » du champion (Data Dragon) et emblème du rang (CommunityDragon), téléchargés une fois
-dans assets/cache/."""
+dans <données>/cache/images."""
 import math, os, subprocess, urllib.request, zlib
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
-from .paths import ROOT
+from .paths import CACHE as DATA_CACHE
 
 FPS = 60
-VERSION = 1  # à augmenter si le dessin change (rendus en cache dans assets/banner_cache)
-CACHE = os.path.join(ROOT, "assets", "cache")
-OUT_CACHE = os.path.join(ROOT, "assets", "banner_cache")
+VERSION = 1  # à augmenter si le dessin change (rendus en cache dans <données>/cache/banners)
+CACHE = os.path.join(DATA_CACHE, "images")
+OUT_CACHE = os.path.join(DATA_CACHE, "banners")
 SPLASH = "https://ddragon.leagueoflegends.com/cdn/img/champion/centered/{}_0.jpg"
 EMBLEM = ("https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/ranked-emblem/"
           "emblem-{}.png")

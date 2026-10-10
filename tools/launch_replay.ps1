@@ -5,10 +5,11 @@
 # Quand lolclip crée close_replay.flag, on ferme le jeu ; à la fin on s'assure que Vanguard tourne.
 param(
     [Parameter(Mandatory)] [string]$Rofl,
-    [Parameter(Mandatory)] [string]$ClientDir
+    [Parameter(Mandatory)] [string]$ClientDir,
+    [string]$RunDir = $PSScriptRoot  # journal + fichier de fermeture (dossier modifiable de l'appli)
 )
-$log = Join-Path $PSScriptRoot 'launch_replay.log'
-$flag = Join-Path $PSScriptRoot 'close_replay.flag'
+$log = Join-Path $RunDir 'launch_replay.log'
+$flag = Join-Path $RunDir 'close_replay.flag'
 "$(Get-Date -Format s) launch $Rofl with $ClientDir" | Out-File $log -Encoding utf8
 Remove-Item $flag -ErrorAction SilentlyContinue
 try {

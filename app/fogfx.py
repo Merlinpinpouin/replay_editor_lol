@@ -8,11 +8,11 @@ par ffmpeg sur le montage (montage.assemble)."""
 import os, subprocess
 import numpy as np
 from PIL import Image
-from .paths import ROOT
+from .paths import CACHE
 
 FPS = 60
-VERSION = 1  # à augmenter si le rendu du nuage change (fichiers en cache dans assets/fog_cache)
-TEX = os.path.join(ROOT, "assets", "fog_cloud.png")
+VERSION = 1  # à augmenter si le rendu du nuage change (fichiers en cache dans <données>/cache/fog)
+TEX = os.path.join(CACHE, "fog_cloud.png")
 T_IN, T_OUT = 0.6, 0.85  # durée de l'entrée dans le nuage (fin de A) et de la sortie (début de B), en s
 HOLD = 0.06  # écran entièrement couvert autour de la coupe
 DARK = np.array([38, 44, 54], np.float32)  # creux de la fumée (gris bleuté sombre)
@@ -36,8 +36,9 @@ def _noise(n, seed, octaves=6):
 
 
 def texture():
-    """Texture de fumée (2 couches dans les canaux R et G), créée une fois dans assets/."""
+    """Texture de fumée (2 couches dans les canaux R et G), créée une fois dans le cache."""
     if not os.path.exists(TEX):
+        os.makedirs(os.path.dirname(TEX), exist_ok=True)
         a, b = _noise(1536, 7), _noise(1536, 11)
         img = np.stack([a, b, np.zeros_like(a)], -1)
         Image.fromarray((img * 255).astype(np.uint8)).save(TEX)

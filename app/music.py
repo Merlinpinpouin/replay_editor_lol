@@ -1,11 +1,11 @@
 """Musique de fond : liste des morceaux disponibles + repérage automatique du drop (calé ensuite sur le 1er kill)."""
 import json, os, subprocess
 import numpy as np
-from .paths import ROOT
+from .paths import FROZEN, MUSIC, ROOT
 
-FOLDERS = [os.path.join(ROOT, "music"), os.path.join(ROOT, "infos")]  # music/ en priorité
+FOLDERS = [MUSIC] + ([] if FROZEN else [os.path.join(ROOT, "infos")])  # music/ en priorité
 EXTS = (".mp3", ".wav", ".flac", ".ogg", ".m4a", ".aac", ".opus")
-CACHE = os.path.join(ROOT, "music", "drops.json")
+CACHE = os.path.join(MUSIC, "drops.json")
 SR, HOP = 8000, 0.05  # analyse en mono 8 kHz, énergie toutes les 50 ms
 
 

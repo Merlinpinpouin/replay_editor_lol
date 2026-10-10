@@ -203,6 +203,7 @@ h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute
     <div class="bar"><i id="pbar"></i></div>
     <div id="pstep" class="sub" style="margin:0"></div>
     <pre id="plog" class="hidden"></pre>
+    <div class="row" style="margin-top:10px"><button class="ghost" id="b-renders" style="padding:4px 10px;font-size:12px">Ouvrir le dossier des vidéos</button><span class="hint" id="renders-dir"></span></div>
     <div id="vids"></div>
   </section>
 </main>
@@ -550,7 +551,8 @@ $('b-preset').onclick = e => {
 };
 $('b-none').onclick = () => { selected.clear(); renderActs(); };
 const keyState = k => { $('apikey-st').textContent = k ? 'clé enregistrée ✔' : ''; };
-api('/api/settings').then(r => keyState(r.has_key)).catch(() => {});
+api('/api/settings').then(r => { keyState(r.has_key); $('renders-dir').textContent = r.renders || ''; }).catch(() => {});
+$('b-renders').onclick = () => api('/api/open_renders', { method: 'POST' }).catch(e => alert(e.message));
 $('b-apikey').onclick = async () => {
   const r = await api('/api/settings', { method: 'POST', body: JSON.stringify({ riot_api_key: $('apikey').value }) });
   $('apikey').value = ''; keyState(r.has_key);

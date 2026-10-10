@@ -6,6 +6,8 @@ renders/
 music/
 infos/
 settings.json
+cache/
+run/
 assets/cache/
 assets/banner_cache/
 assets/fog_cache/

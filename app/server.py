@@ -3,7 +3,7 @@ import json, mimetypes, os, re, threading, webbrowser
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, unquote, urlparse
 from . import clients, game, lcu, music, pipeline, ranks, rofl
-from .paths import REPLAYS, RENDERS
+from .paths import DATA, REPLAYS, RENDERS
 
 STATIC = os.path.join(os.path.dirname(__file__), "static")
 PORT = 8765
@@ -116,7 +116,8 @@ class H(BaseHTTPRequestHandler):
             if u.path == "/api/music":
                 return self._json(music.tracks())
             if u.path == "/api/settings":
-                return self._json({"has_key": bool(ranks.settings().get("riot_api_key"))})
+                return self._json({"has_key": bool(ranks.settings().get("riot_api_key")), "data": DATA,
+                                   "renders": RENDERS})
             if u.path == "/api/music/info":  # drop du morceau (détecté au 1er appel, ~1-2 s)
                 path = music.path_for(parse_qs(u.query).get("name", [""])[0])
                 return self._json(music.info(path)) if path else self._json({"error": "morceau introuvable"}, 404)
@@ -173,6 +174,10 @@ class H(BaseHTTPRequestHandler):
                 return self._json(CURRENT["info"])
             if u.path == "/api/analyze":
                 return self._json({"ok": pipeline.analyze_async(CURRENT["info"])})
+            if u.path == "/api/open_renders":  # dossier des vidéos dans l'explorateur
+                os.makedirs(RENDERS, exist_ok=True)
+                os.startfile(RENDERS)
+                return self._json({"ok": True})
             if u.path == "/api/close":
                 return self._json({"ok": game.close_replay()})
             if u.path == "/api/install":

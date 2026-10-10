@@ -20,6 +20,9 @@ from app import camera, game, rofl, server
 def main(a):
     if not a:
         return server.main()
+    if a[0] == "--cover":  # fenêtre de repérage (processus à part, voir app/cover.py)
+        from app import cover
+        return exec(cover._SCRIPT, {"__name__": "__cover__"})
     c = a[0]
     if c == "info":
         print(json.dumps(rofl.read(a[1]), indent=1, ensure_ascii=False))

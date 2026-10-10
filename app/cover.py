@@ -51,7 +51,9 @@ def show(text=""):
         try:
             # le processus de la fenêtre lit son entrée en UTF-8 (sinon cp1252 : « RepÃ©rage »)
             env = dict(os.environ, PYTHONIOENCODING="utf-8", PYTHONUTF8="1")
-            _proc = subprocess.Popen([sys.executable, "-c", _SCRIPT], stdin=subprocess.PIPE, text=True,
+            # appli de bureau (PyInstaller) : sys.executable est le moteur lui-même, lancé en mode --cover
+            cmd = [sys.executable, "--cover"] if getattr(sys, "frozen", False) else [sys.executable, "-c", _SCRIPT]
+            _proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, text=True,
                                      encoding="utf-8", env=env,
                                      creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         except Exception:
