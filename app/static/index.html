@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>lolclip</title>
+<style>
+:root{--bg:#0f0d0b;--panel:#1a1714;--line:#2e2924;--text:#efe6da;--muted:#9c907f;--accent:#e0a453;--ok:#7fbf7a;--err:#e0675a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,Segoe UI,sans-serif}
+main{max-width:880px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:22px;margin:0 0 4px;letter-spacing:.02em}
+.sub{color:var(--muted);margin:0 0 24px}
+#drop{border:2px dashed var(--line);border-radius:12px;padding:40px 16px;text-align:center;color:var(--muted);transition:.15s;cursor:pointer}
+#drop.over{border-color:var(--accent);color:var(--text);background:#211c16}
+#drop b{color:var(--text)}
+.recent{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px}
+.recent button{font-size:12px;padding:4px 8px}
+section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:16px}
+section h2{font-size:14px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px}
+button{background:var(--accent);color:#1a1209;border:0;border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;font-size:14px}
+button.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+button:disabled{opacity:.4;cursor:default}
+.teams{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.teams div{font-size:13px}
+.p{display:flex;justify-content:space-between;gap:8px;padding:3px 6px;border-radius:6px;cursor:pointer}
+.p:hover{background:#25201b}
+.p.sel{outline:1px solid var(--accent)}
+.kda{color:var(--muted);font-variant-numeric:tabular-nums}
+.p .rk{font-size:11px;padding:1px 4px;margin-left:6px;max-width:120px}
+.p .side{display:flex;align-items:center;gap:4px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pill{font-size:12px;padding:2px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.pill.ok{color:var(--ok);border-color:#3a5a38}.pill.err{color:var(--err);border-color:#5c2f2a}
+.bar{height:6px;background:#2a251f;border-radius:6px;overflow:hidden;margin:10px 0}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+pre{background:#110f0d;border-radius:8px;padding:10px;font-size:12px;max-height:200px;overflow:auto;color:var(--muted);margin:10px 0 0;white-space:pre-wrap}
+#vids video{width:100%;border-radius:8px;margin-top:12px;background:#000}
+.hidden{display:none}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;align-self:flex-start}
+.seg button{border-radius:0;background:transparent;color:var(--muted);font-weight:600;padding:7px 14px}
+.seg button.on{background:var(--accent);color:#1a1209}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px 20px;margin:16px 0}
+.opts label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.opts output{color:var(--text);font-variant-numeric:tabular-nums}
+select{background:#110f0d;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 8px;font:inherit;font-size:14px}
+input[type=range]{accent-color:var(--accent);width:100%}
+#acts{max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-top:8px}
+.act{display:grid;grid-template-columns:22px 52px 92px 1fr auto;gap:8px;align-items:center;padding:6px 10px;border-bottom:1px solid var(--line);cursor:pointer;font-size:13px}
+.act:last-child{border-bottom:0}
+.act:hover{background:#25201b}
+.act.on{background:#2a2117}
+.act input{pointer-events:none;accent-color:var(--accent)}
+.act .t{color:var(--muted);font-variant-numeric:tabular-nums}
+.act .l{font-weight:600;text-transform:capitalize}
+.act .l.big{color:var(--accent)}
+.act .w{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.act .w span{color:var(--muted)}
+.act select{padding:2px 6px;font-size:12px;max-width:170px}
+.mus{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
+.mus button{padding:3px 9px;font-size:12px}
+.mus b{color:var(--text);font-variant-numeric:tabular-nums}
+.empty{padding:14px;color:var(--muted);font-size:13px}
+.hint{font-size:13px;color:var(--muted)}
+.tl{position:relative;user-select:none;touch-action:none;border-radius:8px;background:#110f0d;border:1px solid var(--line)}
+#tov{height:34px;cursor:pointer;margin-top:8px}
+#tz{height:118px;cursor:crosshair;margin-top:8px;overflow:hidden}
+.tl .win{position:absolute;top:0;bottom:0;background:rgba(224,164,83,.12);border:1px solid rgba(224,164,83,.5);border-radius:4px;pointer-events:none}
+.tl .dot{position:absolute;top:50%;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;pointer-events:none}
+.tl .dot.t100,.tl .mk.t100 i{background:#5aa0e0}.tl .dot.t200,.tl .mk.t200 i{background:#e0675a}
+.tl .dot.dim,.tl .mk.dim{opacity:.22}
+.tl .dot.me{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;box-shadow:0 0 0 2px var(--accent)}
+.tl .tick{position:absolute;bottom:0;height:16px;border-left:1px solid var(--line);font-size:10px;color:var(--muted);padding-left:3px;pointer-events:none;font-variant-numeric:tabular-nums}
+.tl .mk{position:absolute;transform:translateX(-50%);font-size:11px;white-space:nowrap;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tl .mk i{width:2px;height:14px;border-radius:2px}
+.tl .mk span{background:#1a1714;border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--text)}
+.tl .mk.me span{border-color:var(--accent)}
+.tl .sel{position:absolute;top:0;bottom:0;background:rgba(224,164,83,.18);border-left:2px solid var(--accent);border-right:2px solid var(--accent);pointer-events:none}
+.tl .h{position:absolute;top:0;bottom:0;width:14px;margin-left:-7px;cursor:ew-resize}
+.tl .h::after{content:"";position:absolute;left:4px;top:40%;width:6px;height:20%;border-radius:3px;background:var(--accent)}
+.tl .clipz{position:absolute;top:0;height:4px;background:var(--ok);opacity:.7;pointer-events:none}
+.selinfo{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;font-size:13px}
+.selinfo b{font-variant-numeric:tabular-nums}
+.selinfo button{padding:4px 9px;font-size:12px}
+.clips{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.clip{display:flex;gap:10px;align-items:center;font-size:13px;background:#110f0d;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.clip b{font-variant-numeric:tabular-nums}
+.clip select{padding:3px 6px;font-size:12px}
+.clip .x{margin-left:auto;background:transparent;color:var(--muted);padding:2px 8px;font-size:16px}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:18px 0 0}
+@media(max-width:600px){.teams{grid-template-columns:1fr}.act{grid-template-columns:22px 44px 70px 1fr}.act select{grid-column:2/-1}}
+</style>
+</head>
+<body>
+<main>
+  <h1>lolclip</h1>
+  <p class="sub">Dépose un replay, je m'occupe du reste.</p>
+
+  <div id="drop"><b>Glisse ton fichier .rofl ici</b><br>ou clique pour en choisir un (un fichier audio = nouvelle musique)<input type="file" id="pick" accept=".rofl" hidden></div>
+  <div class="recent" id="recent"></div>
+
+  <section id="s-info" class="hidden">
+    <h2>Replay</h2>
+    <div class="row"><span id="title"></span><span class="pill" id="ver"></span><span class="pill" id="client"></span></div>
+    <p class="sub" style="margin:8px 0">Clique sur un joueur pour ne voir que ses actions et le suivre avec la caméra.</p>
+    <div class="teams"><div id="t100"></div><div id="t200"></div></div>
+    <p class="hint" style="margin:10px 0 0" id="rank-hint">Rangs (pour l'encadré du joueur) : trouvés tout seuls si le client LoL est ouvert, ou avec une clé API Riot ; sinon choisis-les dans la liste.
+      <span class="row" style="gap:6px;margin-top:4px"><input id="apikey" type="password" placeholder="Clé API Riot (facultatif, RGAPI-…)" style="background:#110f0d;color:var(--text);border:1px solid var(--line);border-radius:8px;padding:5px 8px;font:inherit;font-size:13px;width:260px"><button class="ghost" id="b-apikey" style="padding:4px 10px;font-size:12px">Enregistrer</button><span id="apikey-st"></span></span></p>
+  </section>
+
+  <section id="s-client" class="hidden">
+    <h2>Client du jeu</h2>
+    <p id="client-msg"></p>
+    <button id="b-install">Installer le client</button>
+    <div class="bar"><i id="ibar"></i></div>
+    <pre id="ilog" class="hidden"></pre>
+  </section>
+
+  <section id="s-make" class="hidden">
+    <h2>Montage</h2>
+    <div class="row">
+      <button id="b-launch">1. Lancer le replay</button>
+      <button id="b-analyze" class="ghost" disabled>2. Analyser les actions</button>
+      <span class="pill" id="gstate">jeu fermé</span>
+    </div>
+    <p class="sub" style="margin:8px 0 0">Windows va demander une autorisation administrateur (Vanguard est coupé quelques secondes pendant le lancement).</p>
+
+    <div class="opts">
+      <label>Style
+        <span class="seg" id="mode"><button data-v="cinema" class="on">Cinématique</button><button data-v="top">Vue du dessus</button></span>
+        <button class="ghost" id="b-preset" style="align-self:flex-start;padding:4px 10px;font-size:12px" title="Vue du dessus rapprochée, format carré, couleurs du jeu, clips combinés">Préréglage « vidéo carrée » (infos/ssstik)</button>
+      </label>
+      <label>Caméra sur
+        <select id="follow"><option value="">l'auteur de l'action</option></select>
+      </label>
+      <label>Format
+        <select id="fmt">
+          <option value="cinema">Cinéma 2560×1440 (bandes noires)</option>
+          <option value="wide">16:9 plein écran 2560×1440</option>
+          <option value="square">Carré 1:1 1440×1440</option>
+          <option value="vertical">Vertical 9:16 1080×1920</option>
+        </select>
+      </label>
+      <label>Distance caméra : <output id="zoom-v"></output>
+        <input type="range" id="zoom" min="0.6" max="1.4" step="0.05" value="1">
+      </label>
+      <label>Image
+        <span class="row hint" style="gap:6px"><input type="checkbox" id="grade" checked style="accent-color:var(--accent)"> filtre couleur (teal &amp; orange)</span>
+      </label>
+      <label>Clips
+        <span class="row hint" style="gap:6px"><input type="checkbox" id="combine" style="accent-color:var(--accent)"> combiner en une seule vidéo (traversée du brouillard entre les actions)</span>
+      </label>
+      <label id="fog-wrap">Volutes du brouillard (transitions) : <output id="fog-v"></output>
+        <input type="range" id="fog" min="0" max="1" step="0.1" value="0.8">
+      </label>
+      <label>Musique
+        <select id="music"><option value="">aucune (son du jeu seul)</option></select>
+        <span class="mus"><button class="ghost" id="b-addmus">+ Ajouter un morceau</button><input type="file" id="pickmus" accept="audio/*,.mp3,.wav,.flac,.ogg,.m4a,.aac,.opus" hidden><span>ou glisse-le sur la zone du haut</span></span>
+        <span class="mus hidden" id="musinfo"></span>
+        <audio id="mplay" preload="none" class="hidden"></audio>
+        <span class="hint">le drop tombe sur le 1er kill de la vidéo</span>
+      </label>
+      <label>Volume du son : <output id="vol-v"></output>
+        <input type="range" id="vol" min="-32" max="-14" step="1" value="-23">
+      </label>
+      <label>Encadré du joueur
+        <span class="row hint" style="gap:6px"><input type="checkbox" id="banner" checked style="accent-color:var(--accent)"> au début de chaque action (région, rang, pseudo, champion)</span>
+      </label>
+      <label>Après la génération
+        <span class="row hint" style="gap:6px"><input type="checkbox" id="close" checked style="accent-color:var(--accent)"> fermer le jeu (Vanguard reste actif)</span>
+      </label>
+    </div>
+
+    <h3>Timeline</h3>
+    <p class="hint" style="margin:4px 0 0">Clique sur la barre du haut pour te déplacer dans la partie. En dessous, glisse pour sélectionner le passage à enregistrer (molette = zoom), ou clique sur un kill. Les points cerclés sont les kills du joueur choisi.</p>
+    <div class="tl" id="tov"></div>
+    <div class="tl" id="tz"></div>
+    <div class="selinfo" id="selinfo"></div>
+    <div class="clips" id="clips"></div>
+
+    <h3>Ou dans la liste des actions</h3>
+    <div class="opts" style="margin:8px 0">
+      <label>Avant le 1er kill : <output id="pre-v"></output>
+        <input type="range" id="pre" min="1" max="10" step="0.5" value="4">
+      </label>
+      <label>Après le dernier kill : <output id="post-v"></output>
+        <input type="range" id="post" min="0.5" max="8" step="0.5" value="1.5">
+      </label>
+    </div>
+    <div class="row" style="justify-content:space-between">
+      <span class="hint" id="acts-title">Actions</span>
+      <button class="ghost" id="b-none" style="padding:4px 10px;font-size:12px">Tout décocher</button>
+    </div>
+    <div id="acts"><div class="empty">Lance le replay puis clique sur « Analyser les actions ».</div></div>
+
+    <div class="row" style="margin-top:14px">
+      <button id="b-make" disabled>3. Générer</button>
+      <label class="hint" id="n-wrap">rien de choisi : les <select id="n"><option>1</option><option>2</option><option selected>3</option><option>5</option></select> meilleures actions</label>
+      <button class="ghost" id="b-close" disabled>Fermer le jeu</button>
+    </div>
+    <p class="sub" style="margin:8px 0 0">Pendant la génération (~3 min par clip), laisse le jeu au premier plan et ne touche pas au PC : l'image est capturée à l'écran. Le passage est enregistré d'une traite ; seul un penta saute les temps morts entre ses kills. Quadra/penta : au moins 4,9 s gardées après le dernier kill pour l'annonce.</p>
+    <div class="bar"><i id="pbar"></i></div>
+    <div id="pstep" class="sub" style="margin:0"></div>
+    <pre id="plog" class="hidden"></pre>
+    <div id="vids"></div>
+  </section>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+let info = null, focus = null, mode = 'cinema', actions = [], actsKey = null, gameOn = false, busy = false;
+const selected = new Set();
+const followOf = new Map(); // id d'action -> joueur suivi (vide = réglage « Caméra sur »)
+const BIG = ['triple', 'quadra', 'penta', 'teamfight'];
+
+async function api(path, opts) {
+  const r = await fetch(path, opts);
+  const j = await r.json();
+  if (!r.ok) throw new Error(j.error || r.status);
+  return j;
+}
+const esc = t => String(t ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const champ = n => { const p = info && info.players.find(p => p.name === n); return p ? p.champion : n; };
+const clock = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+
+function show(i) {
+  info = i; focus = null; selected.clear(); followOf.clear(); actsKey = null; clips = []; sel = null; win0 = 0; WIN = 90; drawClips();
+  $('s-info').classList.remove('hidden');
+  $('ver').textContent = 'patch ' + i.version;
+  const mins = Math.floor(i.duration / 60), secs = Math.round(i.duration % 60);
+  $('title').textContent = `${i.file} · ${mins}:${String(secs).padStart(2, '0')}`;
+  const f = $('follow');
+  f.innerHTML = '<option value="">l\'auteur de l\'action</option>';
+  for (const team of [100, 200]) {
+    const el = $('t' + team); el.innerHTML = '';
+    for (const p of i.players.filter(p => p.team === team)) {
+      const d = document.createElement('div'); d.className = 'p';
+      d.innerHTML = `<span>${esc(p.champion)} <span class="kda">${esc(p.name || '')}</span></span><span class="side"><span class="kda">${p.kills}/${p.deaths}/${p.assists}</span>${rankSelect(p)}</span>`;
+      const rs = d.querySelector('.rk');
+      if (rs) {
+        rs.onclick = e => e.stopPropagation();
+        rs.onchange = async e => {
+          const i2 = await api('/api/rank', { method: 'POST', body: JSON.stringify({ puuid: p.puuid, tier: e.target.value }) });
+          updateRanks(i2);
+        };
+      }
+      d.onclick = () => {
+        focus = focus === p.name ? null : p.name;
+        document.querySelectorAll('.p').forEach(x => x.classList.remove('sel'));
+        if (focus) d.classList.add('sel');
+        $('follow').value = focus || '';
+        renderActs();
+      };
+      el.appendChild(d);
+      const o = document.createElement('option'); o.value = p.name; o.textContent = `${p.champion} (${p.name})`;
+      f.appendChild(o);
+    }
+  }
+  refresh();
+}
+
+// rangs mis à jour sans tout recharger (les actions cochées et les passages restent)
+function updateRanks(i2) {
+  for (const p of info.players) { const q = i2.players.find(q => q.puuid === p.puuid); if (q) p.rank = q.rank; }
+  document.querySelectorAll('.p .rk').forEach(sel => {
+    const p = info.players.find(p => p.puuid === sel.dataset.puuid);
+    if (p) { const tmp = document.createElement('span'); tmp.innerHTML = rankSelect(p); sel.innerHTML = tmp.firstChild.innerHTML; sel.value = p.rank && p.rank.source === 'manuel' ? p.rank.tier : ''; }
+  });
+}
+
+const TIERS = { IRON: 'Fer', BRONZE: 'Bronze', SILVER: 'Argent', GOLD: 'Or', PLATINUM: 'Platine', EMERALD: 'Émeraude', DIAMOND: 'Diamant', MASTER: 'Maître', GRANDMASTER: 'Grand maître', CHALLENGER: 'Challenger' };
+function rankSelect(p) {
+  if (!p.puuid) return '';
+  const r = p.rank, manual = r && r.source === 'manuel';
+  const auto = r && !manual ? `auto : ${TIERS[r.tier] || r.tier}${r.division ? ' ' + r.division : ''}` : 'rang ?';
+  return `<select class="rk" data-puuid="${esc(p.puuid)}" title="Rang affiché dans l'encadré"><option value="">${esc(auto)}</option>`
+    + Object.entries(TIERS).map(([k, v]) => `<option value="${k}" ${manual && r.tier === k ? 'selected' : ''}>${v}</option>`).join('') + '</select>';
+}
+
+function renderActs() {
+  const list = actions.filter(a => !focus || a.star === focus || a.victims.includes(focus) || a.assisters.includes(focus));
+  $('acts-title').textContent = actions.length
+    ? `${list.length} action${list.length > 1 ? 's' : ''}${focus ? ' avec ' + champ(focus) : ''} · coche celles à monter`
+    : 'Actions';
+  const box = $('acts');
+  if (!list.length) {
+    box.innerHTML = `<div class="empty">${actions.length ? 'Aucune action pour ce joueur.' : 'Lance le replay puis clique sur « Analyser les actions ».'}</div>`;
+  } else {
+    box.innerHTML = '';
+    for (const a of list) {
+      const on = selected.has(a.id);
+      const d = document.createElement('div'); d.className = 'act' + (on ? ' on' : '');
+      const victims = a.victims.filter(Boolean).map(champ).join(', ');
+      d.innerHTML = `<input type="checkbox" ${on ? 'checked' : ''}><span class="t">${clock(a.time)}</span>`
+        + `<span class="l ${BIG.includes(a.label) ? 'big' : ''}">${esc(a.label)}</span>`
+        + `<span class="w">${esc(champ(a.star))} <span>→ ${esc(victims)}</span></span>`;
+      if (on) {
+        // caméra propre à cette action : enchaîner un joueur sur la 1re action, un autre sur la suivante
+        const who = [...new Set([a.star, ...a.assisters, ...a.victims].filter(Boolean))];
+        const sel = document.createElement('select');
+        sel.title = 'Caméra sur';
+        sel.innerHTML = `<option value="">caméra : ${esc(champ($('follow').value || a.star))}</option>`
+          + who.map(n => `<option value="${esc(n)}">caméra : ${esc(champ(n))}</option>`).join('')
+          + '<option disabled>──────</option>'
+          + info.players.filter(p => !who.includes(p.name)).map(p => `<option value="${esc(p.name)}">caméra : ${esc(p.champion)}</option>`).join('');
+        sel.value = followOf.get(a.id) || '';
+        sel.onclick = e => e.stopPropagation();
+        sel.onchange = e => { e.target.value ? followOf.set(a.id, e.target.value) : followOf.delete(a.id); };
+        d.appendChild(sel);
+      } else d.appendChild(document.createElement('span'));
+      d.onclick = () => { on ? selected.delete(a.id) : selected.add(a.id); renderActs(); };
+      box.appendChild(d);
+    }
+  }
+  drawTimeline();
+  updateMake();
+}
+
+const chosen = () => [...selected].filter(id => actions.some(a => a.id === id));
+
+function updateMake() {
+  const n = clips.length || chosen().length;
+  $('b-make').textContent = n ? `3. Générer ${n} clip${n > 1 ? 's' : ''}${clips.length ? ' (timeline)' : ''}` : '3. Générer';
+  $('n-wrap').classList.toggle('hidden', n > 0);
+  $('b-make').disabled = !gameOn || busy;
+  $('b-analyze').disabled = !gameOn || busy;
+  $('b-close').disabled = !gameOn || busy;
+}
+
+// ---------- timeline ----------
+let kills = [], clips = [], sel = null, win0 = 0, WIN = 90;
+const dur = () => (info ? info.duration : 1);
+const team = n => { const p = info && info.players.find(p => p.name === n); return p ? p.team : 0; };
+const involves = (k, n) => k.killer === n || k.victim === n || (k.assisters || []).includes(n);
+const clock1 = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`.replace('.', ',');
+const clampWin = () => { WIN = Math.min(Math.max(WIN, 15), Math.max(15, dur())); win0 = Math.min(Math.max(win0, 0), Math.max(0, dur() - WIN)); };
+
+function drawTimeline() {
+  if (!info) return;
+  clampWin();
+  const ov = $('tov'), z = $('tz'), D = dur();
+  // vue d'ensemble
+  let h = `<div class="win" style="left:${100 * win0 / D}%;width:${100 * WIN / D}%"></div>`;
+  for (const c of clips) h += `<div class="clipz" style="left:${100 * c.start / D}%;width:${Math.max(0.3, 100 * (c.end - c.start) / D)}%"></div>`;
+  for (const k of kills) {
+    const cls = `t${team(k.killer)}${focus ? (involves(k, focus) ? (k.killer === focus ? ' me' : '') : ' dim') : ''}`;
+    h += `<div class="dot ${cls}" style="left:${100 * k.t / D}%"></div>`;
+  }
+  ov.innerHTML = h;
+  // zoom
+  const X = t => 100 * (t - win0) / WIN;
+  h = '';
+  const step = WIN > 300 ? 60 : WIN > 120 ? 30 : WIN > 45 ? 10 : 5;
+  for (let t = Math.ceil(win0 / step) * step; t <= win0 + WIN; t += step) h += `<div class="tick" style="left:${X(t)}%">${clock(t)}</div>`;
+  for (const c of clips) h += `<div class="clipz" style="left:${X(c.start)}%;width:${100 * (c.end - c.start) / WIN}%"></div>`;
+  if (sel) h += `<div class="sel" style="left:${X(sel.start)}%;width:${100 * (sel.end - sel.start) / WIN}%"></div>`
+    + `<div class="h" data-h="start" style="left:${X(sel.start)}%"></div><div class="h" data-h="end" style="left:${X(sel.end)}%"></div>`;
+  kills.filter(k => k.t >= win0 && k.t <= win0 + WIN).forEach((k, i) => {
+    const cls = `t${team(k.killer)}${focus ? (involves(k, focus) ? (k.killer === focus ? ' me' : '') : ' dim') : ''}`;
+    h += `<div class="mk ${cls}" data-t="${k.t}" style="left:${X(k.t)}%;top:${6 + (i % 3) * 22}px" title="${clock1(k.t)} ${esc(champ(k.killer))} tue ${esc(champ(k.victim))}">`
+      + `<span>${esc(champ(k.killer))} › ${esc(champ(k.victim))}</span><i></i></div>`;
+  });
+  z.innerHTML = h;
+  // sélection
+  $('selinfo').innerHTML = sel
+    ? `Passage : <button class="ghost" data-n="start,-0.5">−</button><b>${clock1(sel.start)}</b><button class="ghost" data-n="start,0.5">+</button>`
+      + ` → <button class="ghost" data-n="end,-0.5">−</button><b>${clock1(sel.end)}</b><button class="ghost" data-n="end,0.5">+</button>`
+      + ` <span class="hint">(${(sel.end - sel.start).toFixed(1).replace('.', ',')} s, ${kills.filter(k => k.t >= sel.start && k.t <= sel.end).length} kill(s))</span>`
+      + ` <button id="b-add">Ajouter ce passage</button>`
+    : '<span class="hint">Aucun passage sélectionné.</span>';
+  const add = $('b-add');
+  if (add) add.onclick = () => {
+    clips.push({ start: sel.start, end: sel.end, follow: $('follow').value || '' });
+    sel = null; drawTimeline(); drawClips();
+  };
+  for (const b of $('selinfo').querySelectorAll('[data-n]')) b.onclick = () => {
+    const [edge, d] = b.dataset.n.split(','); sel[edge] = Math.min(Math.max(sel[edge] + Number(d), 0), D);
+    if (sel.end - sel.start < 1) sel[edge] -= Number(d);
+    drawTimeline();
+  };
+}
+
+function drawClips() {
+  const box = $('clips'); box.innerHTML = '';
+  clips.forEach((c, i) => {
+    const d = document.createElement('div'); d.className = 'clip';
+    const opts = ['<option value="">auto (qui fait le plus de kills)</option>']
+      .concat(info.players.map(p => `<option value="${esc(p.name)}" ${p.name === c.follow ? 'selected' : ''}>${esc(p.champion)}</option>`));
+    d.innerHTML = `<span>${i + 1}.</span><b>${clock1(c.start)} → ${clock1(c.end)}</b><span class="hint">caméra sur</span><select>${opts.join('')}</select><button class="x" title="Retirer">×</button>`;
+    d.querySelector('select').onchange = e => { c.follow = e.target.value; };
+    d.querySelector('.x').onclick = () => { clips.splice(i, 1); drawClips(); drawTimeline(); };
+    d.querySelector('b').onclick = () => { win0 = (c.start + c.end) / 2 - WIN / 2; sel = { start: c.start, end: c.end }; drawTimeline(); };
+    box.appendChild(d);
+  });
+  updateMake();
+}
+
+(function timelineInput() {
+  const ov = $('tov'), z = $('tz');
+  const tAt = (el, e, a, w) => { const r = el.getBoundingClientRect(); return a + w * Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1); };
+  let dragOv = false;
+  ov.onpointerdown = e => { dragOv = true; ov.setPointerCapture(e.pointerId); win0 = tAt(ov, e, 0, dur()) - WIN / 2; drawTimeline(); };
+  ov.onpointermove = e => { if (dragOv) { win0 = tAt(ov, e, 0, dur()) - WIN / 2; drawTimeline(); } };
+  ov.onpointerup = () => { dragOv = false; };
+  let drag = null;
+  z.onpointerdown = e => {
+    if (!info) return;
+    const t = tAt(z, e, win0, WIN);
+    const mk = e.target.closest('.mk'), hd = e.target.closest('.h');
+    z.setPointerCapture(e.pointerId);
+    if (hd) { drag = { edge: hd.dataset.h }; return; }
+    if (mk) { const k = Number(mk.dataset.t); sel = { start: Math.max(0, k - Number($('pre').value)), end: Math.min(dur(), k + Number($('post').value)) }; drag = null; drawTimeline(); return; }
+    drag = { from: t }; sel = { start: t, end: t };
+    drawTimeline();
+  };
+  z.onpointermove = e => {
+    if (!drag || !sel) return;
+    const t = tAt(z, e, win0, WIN);
+    if (drag.edge) { sel[drag.edge] = t; if (sel.start > sel.end) { [sel.start, sel.end] = [sel.end, sel.start]; drag.edge = drag.edge === 'start' ? 'end' : 'start'; } }
+    else { sel.start = Math.min(drag.from, t); sel.end = Math.max(drag.from, t); }
+    drawTimeline();
+  };
+  z.onpointerup = () => { if (sel && sel.end - sel.start < 1) sel = null; drag = null; drawTimeline(); };
+  z.onwheel = e => {
+    e.preventDefault();
+    const t = tAt(z, e, win0, WIN), f = e.deltaY > 0 ? 1.25 : 0.8, r = (t - win0) / WIN;
+    WIN *= f; clampWin(); win0 = t - r * WIN; drawTimeline();
+  };
+})();
+
+const AUDIO = /\.(mp3|wav|flac|ogg|m4a|aac|opus)$/i;
+async function upload(file) {
+  if (AUDIO.test(file.name)) return uploadMusic(file);
+  $('drop').innerHTML = '<b>Lecture…</b>';
+  try {
+    const i = await api('/api/rofl', { method: 'POST', headers: { 'X-Filename': encodeURIComponent(file.name) }, body: file });
+    show(i);
+  } catch (e) { alert(e.message); }
+  $('drop').innerHTML = '<b>Glisse un autre .rofl ici</b><br>ou clique pour en choisir un';
+}
+
+const drop = $('drop');
+drop.onclick = () => $('pick').click();
+$('pick').onchange = e => e.target.files[0] && upload(e.target.files[0]);
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); const f = e.dataTransfer.files[0]; if (f) upload(f); };
+
+api('/api/replays').then(list => {
+  for (const f of list.slice(0, 8)) {
+    const b = document.createElement('button'); b.className = 'ghost'; b.textContent = f;
+    b.onclick = async () => show(await api('/api/select', { method: 'POST', body: JSON.stringify({ file: f }) }));
+    $('recent').appendChild(b);
+  }
+});
+
+for (const b of $('mode').children) b.onclick = e => {
+  e.preventDefault();
+  mode = b.dataset.v;
+  for (const x of $('mode').children) x.classList.toggle('on', x === b);
+};
+const fmt = id => $(id + '-v').textContent = Number($(id).value).toFixed(1).replace('.', ',') + ' s';
+for (const id of ['pre', 'post']) { $(id).oninput = () => fmt(id); fmt(id); }
+const fmtVol = () => { const v = Number($('vol').value); $('vol-v').textContent = v === -23 ? 'normal' : v < -23 ? `plus bas (${v} LUFS)` : `plus fort (${v} LUFS)`; };
+$('vol').oninput = fmtVol; fmtVol();
+const fmtZoom = () => { const z = Number($('zoom').value); $('zoom-v').textContent = z === 1 ? 'normale' : z < 1 ? `plus près (×${z.toFixed(2).replace('.', ',')})` : `plus loin (×${z.toFixed(2).replace('.', ',')})`; };
+$('zoom').oninput = fmtZoom; fmtZoom();
+const fmtFog = () => {
+  const f = Number($('fog').value);
+  $('fog-v').textContent = f < 0.3 ? 'discrètes' : f < 0.7 ? 'moyennes' : 'denses';
+  $('fog-wrap').classList.toggle('hidden', !$('combine').checked);
+};
+$('fog').oninput = fmtFog; $('combine').addEventListener('change', fmtFog);
+const setMode = v => { mode = v; for (const x of $('mode').children) x.classList.toggle('on', x.dataset.v === v); };
+// réglages mémorisés d'une séance à l'autre (confort uniquement)
+const PREFS = ['fmt', 'zoom', 'grade', 'combine', 'vol', 'close', 'music', 'fog', 'banner'];
+function savePrefs() {
+  try { localStorage.setItem('lolclip-prefs', JSON.stringify({ mode, ...Object.fromEntries(PREFS.map(id => [id, $(id).type === 'checkbox' ? $(id).checked : $(id).value])) })); } catch {}
+}
+try {
+  const p = JSON.parse(localStorage.getItem('lolclip-prefs') || '{}');
+  for (const id of PREFS) if (id in p) { if ($(id).type === 'checkbox') $(id).checked = p[id]; else $(id).value = p[id]; }
+  if (p.mode) setMode(p.mode);
+  fmtVol(); fmtZoom();
+} catch {}
+fmtFog();
+for (const id of PREFS) $(id).addEventListener('change', savePrefs);
+$('mode').addEventListener('click', () => setTimeout(savePrefs));
+// morceaux disponibles : la liste arrive après la lecture des réglages, on remet le morceau mémorisé ensuite
+function fillMusic(list, pick) {
+  const m = $('music');
+  m.length = 1;
+  for (const f of list) m.add(new Option(f.replace(/\.[^.]+$/, ''), f));
+  if (pick && list.includes(pick)) m.value = pick;
+}
+api('/api/music').then(list => {
+  let m = null; try { m = JSON.parse(localStorage.getItem('lolclip-prefs') || '{}').music; } catch {}
+  fillMusic(list, m); musicInfo();
+}).catch(() => {});
+
+// ---------- musique : drop détecté, écoute, correction ----------
+let mdrop = null, mstop = null;
+const mclock = t => `${Math.floor(t / 60)}:${(t % 60).toFixed(2).padStart(5, '0')}`.replace('.', ',');
+async function musicInfo(data) {
+  const name = $('music').value, box = $('musinfo'), a = $('mplay');
+  a.pause();
+  if (!name) { box.classList.add('hidden'); mdrop = null; return; }
+  box.classList.remove('hidden');
+  if (!data) {
+    box.innerHTML = 'recherche du drop…';
+    try { data = await api('/api/music/info?name=' + encodeURIComponent(name)); }
+    catch (e) { box.textContent = 'Erreur : ' + e.message; return; }
+    if ($('music').value !== name) return;
+  }
+  mdrop = data;
+  if (!a.src.endsWith('/music/' + encodeURIComponent(name))) a.src = '/music/' + encodeURIComponent(name);
+  box.innerHTML = `drop ${data.manual == null ? 'détecté' : 'corrigé'} à <b>${mclock(data.drop)}</b>`
+    + ` <button class="ghost" id="m-listen">▶ écouter le drop</button>`
+    + ` <button class="ghost" id="m-here" disabled title="Lance l'écoute, mets en pause pile sur le drop, puis clique">le drop est ici</button>`
+    + (data.manual == null ? '' : ` <button class="ghost" id="m-auto" title="Détecté : ${mclock(data.auto)}">revenir à l'auto</button>`);
+  $('m-listen').onclick = e => {
+    e.preventDefault();
+    if (!a.paused) { a.pause(); return; }
+    a.currentTime = Math.max(0, mdrop.drop - 4); a.play();
+    clearTimeout(mstop); mstop = setTimeout(() => a.pause(), 8000);
+  };
+  $('m-here').onclick = e => { e.preventDefault(); setDrop(Math.max(0, a.currentTime - 0.15)); }; // ~ temps de réaction
+  if ($('m-auto')) $('m-auto').onclick = e => { e.preventDefault(); setDrop(null); };
+}
+async function setDrop(t) {
+  const name = $('music').value;
+  musicInfo(await api('/api/music/drop', { method: 'POST', body: JSON.stringify({ name, t }) }));
+}
+$('mplay').onplay = () => { if ($('m-here')) $('m-here').disabled = false; if ($('m-listen')) $('m-listen').textContent = '❚❚ pause'; };
+$('mplay').onpause = () => { if ($('m-listen')) $('m-listen').textContent = '▶ écouter le drop'; };
+$('music').addEventListener('change', () => musicInfo());
+async function uploadMusic(file) {
+  $('music').value = ''; $('musinfo').classList.remove('hidden'); $('musinfo').textContent = `envoi de ${file.name}…`;
+  try {
+    const r = await api('/api/music/upload', { method: 'POST', headers: { 'X-Filename': encodeURIComponent(file.name) }, body: file });
+    fillMusic(r.tracks, r.name); savePrefs(); musicInfo(r);
+  } catch (e) { $('musinfo').textContent = 'Erreur : ' + e.message; }
+}
+$('b-addmus').onclick = e => { e.preventDefault(); $('pickmus').click(); };
+$('pickmus').onchange = e => { if (e.target.files[0]) uploadMusic(e.target.files[0]); e.target.value = ''; };
+$('b-preset').onclick = e => {
+  e.preventDefault();
+  setMode('top'); $('fmt').value = 'square'; $('zoom').value = 0.85; $('grade').checked = false; $('combine').checked = true;
+  fmtZoom(); savePrefs();
+};
+$('b-none').onclick = () => { selected.clear(); renderActs(); };
+const keyState = k => { $('apikey-st').textContent = k ? 'clé enregistrée ✔' : ''; };
+api('/api/settings').then(r => keyState(r.has_key)).catch(() => {});
+$('b-apikey').onclick = async () => {
+  const r = await api('/api/settings', { method: 'POST', body: JSON.stringify({ riot_api_key: $('apikey').value }) });
+  $('apikey').value = ''; keyState(r.has_key);
+  if (r.info && info) updateRanks(r.info);
+};
+
+$('b-install').onclick = async () => { $('b-install').disabled = true; await api('/api/install', { method: 'POST' }); };
+$('b-launch').onclick = async () => { try { await api('/api/launch', { method: 'POST' }); } catch (e) { alert(e.message); } };
+$('b-analyze').onclick = async () => { await api('/api/analyze', { method: 'POST' }); refresh(); };
+$('b-make').onclick = async () => {
+  await api('/api/make', { method: 'POST', body: JSON.stringify({
+    clips: clips.map(c => ({ start: c.start, end: c.end, follow: c.follow || null })),
+    ids: chosen(), follows: Object.fromEntries(chosen().filter(id => followOf.has(id)).map(id => [id, followOf.get(id)])), focus, n: $('n').value, mode, follow: $('follow').value || null,
+    pre: $('pre').value, post: $('post').value, loudness: $('vol').value, close: $('close').checked,
+    fmt: $('fmt').value, zoom: $('zoom').value, grade: $('grade').checked, combine: $('combine').checked,
+    music: $('music').value || null, fog: $('fog').value, banner: $('banner').checked }) });
+  refresh();
+};
+$('b-close').onclick = async () => { $('b-close').disabled = true; await api('/api/close', { method: 'POST' }); refresh(); };
+
+async function refresh() {
+  let s; try { s = await api('/api/status'); } catch { return; }
+  const c = s.current;
+  if (c) {
+    $('client').textContent = c.installed ? (c.main ? 'ton jeu installé (même patch)' : 'client installé') : 'client manquant';
+    $('client').className = 'pill ' + (c.installed ? 'ok' : 'err');
+    $('s-client').classList.toggle('hidden', c.installed);
+    $('s-make').classList.toggle('hidden', !c.installed);
+    if (!c.installed) {
+      const j = s.install;
+      $('client-msg').textContent = `Ce replay a besoin du client ${c.patch} (≈ 29 Go, ${c.free_gb} Go libres sur le disque).`;
+      if (j) {
+        $('b-install').disabled = j.state === 'running';
+        $('ibar').style.width = j.total ? Math.min(100, 100 * j.files / j.total).toFixed(1) + '%' : (j.state === 'done' ? '100%' : '5%');
+        $('ilog').classList.remove('hidden');
+        $('ilog').textContent = (j.error ? 'Erreur : ' + j.error + '\n' : '') + `${j.files}${j.total ? ' / ' + j.total : ''} fichiers\n` + j.log.slice(-6).join('\n');
+      }
+    }
+  }
+  gameOn = s.game;
+  $('gstate').textContent = s.game ? 'replay ouvert' : 'jeu fermé';
+  $('gstate').className = 'pill ' + (s.game ? 'ok' : '');
+  const p = s.pipeline;
+  busy = !['idle', 'done', 'error'].includes(p.step);
+  const key = (p.actions || []).map(a => a.id).join('|');
+  if (info && key !== actsKey) {
+    actsKey = key; actions = p.actions || []; kills = p.kills || [];
+    const best = actions.slice().sort((a, b) => b.score - a.score)[0];
+    if (best) win0 = best.time - WIN / 2;
+    renderActs();
+  } else updateMake();
+  $('pbar').style.width = (busy || p.step === 'done' ? 100 * p.progress : 0) + '%';
+  $('pstep').textContent = p.step === 'idle' ? '' : p.step === 'done' ? 'Terminé ✔' : p.step === 'error' ? 'Erreur : ' + p.error : p.step + '…';
+  $('plog').classList.toggle('hidden', !p.log.length);
+  $('plog').textContent = p.log.join('\n'); $('plog').scrollTop = 1e9;
+  const have = $('vids').children.length;
+  for (const r of (p.results || []).slice(have)) {
+    const v = document.createElement('video'); v.controls = true;
+    v.src = '/renders/' + encodeURIComponent(r.split(/[\\/]/).pop());
+    $('vids').appendChild(v);
+  }
+}
+setInterval(refresh, 1500);
+</script>
+</body>
+</html>
