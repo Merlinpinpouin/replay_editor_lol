@@ -6,9 +6,8 @@ Chaîne par segment : découpe au temps -> 60 i/s constants -> recadrage au form
 -> vignette -> un seul redimensionnement -> bandes noires. Son : celui du jeu (+ musique en option), normalisé."""
 import json, os, subprocess
 from . import fogfx
-from .paths import ROOT
+from .paths import ASSETS, CACHE
 
-ASSETS = os.path.join(ROOT, "assets")
 LUT = os.path.join(ASSETS, "reference.cube")
 VIGNETTE = os.path.join(ASSETS, "vignette_1440.png")
 FPS = 60
@@ -73,8 +72,8 @@ def assemble(raws, out, grade=True, vignette=True, flash=True, loudness=None, fm
     last = "vc"
     if fogs:
         # nuage calculé une fois par format, posé à chaque coupe entre deux actions
-        os.makedirs(os.path.join(ASSETS, "fog_cache"), exist_ok=True)
-        fog = os.path.join(ASSETS, "fog_cache", f"fog_{fogfx.VERSION}_{OUT_W}x{OUT_H}_{fog_strength:.2f}.mkv")
+        os.makedirs(os.path.join(CACHE, "fog"), exist_ok=True)
+        fog = os.path.join(CACHE, "fog", f"fog_{fogfx.VERSION}_{OUT_W}x{OUT_H}_{fog_strength:.2f}.mkv")
         if not os.path.exists(fog):
             fogfx.render(fog, OUT_W, OUT_H, strength=fog_strength)
         cuts = [sum(m["end"] - m["start"] for m in metas[:k]) for k in sorted(fogs)]

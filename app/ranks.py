@@ -5,10 +5,10 @@
 Rang solo/duo en priorité (sinon flex), mis en cache 12 h par PUUID dans projects/ranks.json."""
 import json, os, time, urllib.parse, urllib.request
 from . import lcu
-from .paths import PROJECTS, ROOT
+from .paths import DATA, PROJECTS
 
 CACHE = os.path.join(PROJECTS, "ranks.json")
-SETTINGS = os.path.join(ROOT, "settings.json")
+SETTINGS = os.path.join(DATA, "settings.json")
 TIERS = ("IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER")
 TTL = 12 * 3600
 REGIONS = {"EUW1": "EUW", "EUN1": "EUNE", "NA1": "NA", "KR": "KR", "JP1": "JP", "BR1": "BR", "LA1": "LAN",
@@ -29,6 +29,7 @@ def settings():
 def save_settings(**kw):
     s = settings()
     s.update(kw)
+    os.makedirs(DATA, exist_ok=True)
     json.dump(s, open(SETTINGS, "w", encoding="utf-8"), indent=1)
 
 

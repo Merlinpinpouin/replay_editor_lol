@@ -118,6 +118,7 @@ def manifest_url(version):
 
 
 def free_gb():
+    os.makedirs(CLIENTS, exist_ok=True)  # (1er lancement de l'appli installée : dossier pas encore créé)
     return shutil.disk_usage(CLIENTS).free / 1e9
 
 

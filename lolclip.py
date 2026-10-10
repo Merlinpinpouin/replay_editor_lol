@@ -9,6 +9,18 @@
 """
 import json, os, subprocess, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+if getattr(sys, "frozen", False) and "--cover" not in sys.argv:
+    # moteur de l'appli de bureau, sans console : messages dans <données>/run/backend.log, et aucune fenêtre noire
+    # pour les outils lancés (ffmpeg, PowerShell, enregistrement du son)
+    from app.paths import RUN
+    os.makedirs(RUN, exist_ok=True)
+    sys.stdout = sys.stderr = open(os.path.join(RUN, "backend.log"), "w", encoding="utf-8", buffering=1)
+
+    class _NoWindow(subprocess.Popen):
+        def __init__(self, *a, **k):
+            k["creationflags"] = k.get("creationflags", 0) | 0x08000000  # CREATE_NO_WINDOW
+            super().__init__(*a, **k)
+    subprocess.Popen = _NoWindow
 for _s in (sys.stdout, sys.stderr):  # console Windows : pseudos avec caractères spéciaux
     try:
         _s.reconfigure(encoding="utf-8", errors="replace")
@@ -20,6 +32,9 @@ from app import camera, game, rofl, server
 def main(a):
     if not a:
         return server.main()
+    if a[0] == "--cover":  # fenêtre de repérage (processus à part, voir app/cover.py)
+        from app import cover
+        return exec(cover._SCRIPT, {"__name__": "__cover__"})
     c = a[0]
     if c == "info":
         print(json.dumps(rofl.read(a[1]), indent=1, ensure_ascii=False))

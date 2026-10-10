@@ -1,6 +1,6 @@
 """Client de la Replay API (https://127.0.0.1:2999) + lancement du replay."""
 import http.client, json, os, ssl, subprocess, threading, time
-from .paths import TOOLS
+from .paths import RUN, TOOLS
 from . import clients
 
 BASE = "https://127.0.0.1:2999"
@@ -119,7 +119,9 @@ def launch(rofl, patch):
     LAUNCH["mode"] = "direct"
     clients.prepare_config(patch)
     script = os.path.join(TOOLS, "launch_replay.ps1")
-    args = f"-NoProfile -ExecutionPolicy Bypass -File \"{script}\" -Rofl \"{rofl}\" -ClientDir \"{d}\""
+    os.makedirs(RUN, exist_ok=True)  # journal + fichier de fermeture (le dossier de l'appli n'est pas modifiable)
+    args = (f"-NoProfile -ExecutionPolicy Bypass -File \"{script}\" -Rofl \"{rofl}\" -ClientDir \"{d}\" "
+            f"-RunDir \"{RUN}\"")
     ps = f"Start-Process powershell -Verb RunAs -WindowStyle Hidden -ArgumentList '{args.replace(chr(39), chr(39) * 2)}'"
     subprocess.run(["powershell", "-NoProfile", "-Command", ps], check=True)
     threading.Thread(target=_check_started, daemon=True).start()
@@ -151,7 +153,8 @@ def close_replay(timeout=20):
         while time.time() < end and clients._game_running():
             time.sleep(1)
         return not clients._game_running()
-    open(os.path.join(TOOLS, "close_replay.flag"), "w").close()
+    os.makedirs(RUN, exist_ok=True)
+    open(os.path.join(RUN, "close_replay.flag"), "w").close()
     end = time.time() + timeout
     while time.time() < end:
         if not clients._game_running():
