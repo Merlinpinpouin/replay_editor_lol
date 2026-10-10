@@ -28,7 +28,8 @@ def top():  # le jeu peut repasser au-dessus en reprenant le focus : on se remet
     u.SetWindowPos(hwnd, -1, 0, 0, 0, 0, 0x1 | 0x2 | 0x10 | 0x40)
     root.after(400, top)
 def read():
-    for line in sys.stdin:
+    import io  # texte reçu en UTF-8, quel que soit l'encodage par défaut du processus (exécutable empaqueté)
+    for line in io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", errors="replace"):
         line = line.rstrip("\n")
         if line == "quit":
             break

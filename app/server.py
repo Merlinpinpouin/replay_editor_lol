@@ -6,7 +6,7 @@ from . import clients, game, lcu, music, pipeline, ranks, rofl
 from .paths import DATA, REPLAYS, RENDERS
 
 STATIC = os.path.join(os.path.dirname(__file__), "static")
-PORT = 8765
+PORT = int(os.environ.get("LOLCLIP_PORT") or 8765)  # (autre port : tests, l'appli de bureau utilise 8765)
 CURRENT = {}
 
 
