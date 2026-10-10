@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>lolclip</title>
+<style>
+:root{--bg:#0f0d0b;--text:#efe6da;--muted:#9c907f;--accent:#e0a453;--err:#e0675a}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.5 system-ui,Segoe UI,sans-serif;display:flex;align-items:center;justify-content:center}
+.box{text-align:center;max-width:520px;padding:0 16px}
+h1{font-size:30px;margin:0 0 8px;color:var(--accent);font-weight:600}
+p{color:var(--muted);margin:0}
+.spin{width:28px;height:28px;margin:22px auto 0;border:3px solid #2e2924;border-top-color:var(--accent);border-radius:50%;animation:s 0.9s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+.err{color:var(--err)}
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>lolclip</h1>
+  <p id="msg">Démarrage du moteur…</p>
+  <div class="spin" id="spin"></div>
+</div>
+<script>
+window.showError = m => {
+  const el = document.getElementById('msg');
+  el.textContent = 'Erreur : ' + m;
+  el.className = 'err';
+  document.getElementById('spin').remove();
+};
+</script>
+</body>
+</html>

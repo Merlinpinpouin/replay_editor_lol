@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Aucune commande Tauri : l'interface est servie par le moteur local (http://127.0.0.1:8765).",
+  "windows": ["main"],
+  "permissions": []
+}

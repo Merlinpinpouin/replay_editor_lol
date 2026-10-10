@@ -39,3 +39,5 @@ desktop/node_modules/
 .vscode/
 .idea/
 assets/haze*.png
+.venv-build/
+desktop/icon-src/
