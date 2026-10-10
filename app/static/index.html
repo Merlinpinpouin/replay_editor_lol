@@ -123,7 +123,8 @@ h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute
       <button id="b-analyze" class="ghost" disabled>2. Analyser les actions</button>
       <span class="pill" id="gstate">jeu fermé</span>
     </div>
-    <p class="sub" style="margin:8px 0 0">Windows va demander une autorisation administrateur (Vanguard est coupé quelques secondes pendant le lancement).</p>
+    <p class="sub" style="margin:8px 0 0">Client LoL ouvert : c'est lui qui lance le replay. Sinon, Windows demande une autorisation administrateur (Vanguard est coupé quelques secondes pendant le lancement).</p>
+    <p class="sub" id="launch-msg" style="margin:4px 0 0"></p>
 
     <div class="opts">
       <label>Style
@@ -557,7 +558,7 @@ $('b-apikey').onclick = async () => {
 };
 
 $('b-install').onclick = async () => { $('b-install').disabled = true; await api('/api/install', { method: 'POST' }); };
-$('b-launch').onclick = async () => { try { await api('/api/launch', { method: 'POST' }); } catch (e) { alert(e.message); } };
+$('b-launch').onclick = async () => { try { await api('/api/launch', { method: 'POST' }); } catch (e) { $('launch-msg').textContent = 'Erreur : ' + e.message; } refresh(); };
 $('b-analyze').onclick = async () => { await api('/api/analyze', { method: 'POST' }); refresh(); };
 $('b-make').onclick = async () => {
   await api('/api/make', { method: 'POST', body: JSON.stringify({
@@ -590,6 +591,11 @@ async function refresh() {
     }
   }
   gameOn = s.game;
+  const L = s.launch || {};
+  $('launch-msg').textContent = L.state === 'launching' && !s.game
+    ? (L.mode === 'client' ? 'Le client LoL lance le replay…' : 'Lancement du replay…')
+    : L.state === 'error' ? 'Erreur : ' + L.error : '';
+  $('launch-msg').style.color = L.state === 'error' ? 'var(--err)' : '';
   $('gstate').textContent = s.game ? 'replay ouvert' : 'jeu fermé';
   $('gstate').className = 'pill ' + (s.game ? 'ok' : '');
   const p = s.pipeline;

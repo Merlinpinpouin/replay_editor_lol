@@ -3,15 +3,14 @@
 2. le client LoL ouvert (API locale du client, fichier lockfile : aucune clé à fournir) ;
 3. l'API Riot, si une clé a été enregistrée dans l'interface (settings.json).
 Rang solo/duo en priorité (sinon flex), mis en cache 12 h par PUUID dans projects/ranks.json."""
-import base64, json, os, ssl, time, urllib.parse, urllib.request
-from . import clients
+import json, os, time, urllib.parse, urllib.request
+from . import lcu
 from .paths import PROJECTS, ROOT
 
 CACHE = os.path.join(PROJECTS, "ranks.json")
 SETTINGS = os.path.join(ROOT, "settings.json")
 TIERS = ("IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND", "MASTER", "GRANDMASTER", "CHALLENGER")
 TTL = 12 * 3600
-_CTX = ssl._create_unverified_context()
 REGIONS = {"EUW1": "EUW", "EUN1": "EUNE", "NA1": "NA", "KR": "KR", "JP1": "JP", "BR1": "BR", "LA1": "LAN",
            "LA2": "LAS", "OC1": "OCE", "TR1": "TR", "RU": "RU", "ME1": "ME", "SG2": "SG", "TW2": "TW", "VN2": "VN"}
 
@@ -57,21 +56,11 @@ def _pick(entries):
 
 def _lcu(puuid):
     """API locale du client LoL (ouvert) : rang de n'importe quel joueur à partir de son PUUID."""
-    for d in [clients.main_install(), r"C:\Riot Games\League of Legends"]:
-        f = os.path.join(d or "", "lockfile")
-        if not d or not os.path.isfile(f):
-            continue
-        try:
-            _, _, port, pw, proto = open(f).read().strip().split(":")
-            auth = base64.b64encode(f"riot:{pw}".encode()).decode()
-            req = urllib.request.Request(f"{proto}://127.0.0.1:{port}/lol-ranked/v1/ranked-stats/{puuid}",
-                                         headers={"Authorization": "Basic " + auth})
-            with urllib.request.urlopen(req, context=_CTX, timeout=4) as r:
-                q = json.loads(r.read()).get("queueMap", {})
-            return True, _pick([(k, v.get("tier"), v.get("division")) for k, v in q.items()])
-        except Exception:
-            continue
-    return False, None
+    try:
+        q = (lcu.req("GET", f"/lol-ranked/v1/ranked-stats/{puuid}", timeout=4) or {}).get("queueMap", {})
+    except Exception:
+        return False, None
+    return True, _pick([(k, v.get("tier"), v.get("division")) for k, v in q.items()])
 
 
 def _riot(puuid, platform):
