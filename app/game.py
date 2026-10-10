@@ -91,21 +91,66 @@ def seek(t, paused=True, timeout=90):
     raise TimeoutError(f"seek {t}")
 
 
+LAUNCH = {"mode": None, "state": "idle", "error": None, "t": 0}  # dernier lancement (affiché dans l'interface)
+
+
 def launch(rofl, patch):
-    """Lance le replay avec le bon client. Ouvre une invite UAC (arrêt temporaire de vgk)."""
+    """Lance le replay avec le bon client.
+    - Client LoL ouvert et replay du même patch : le client lance le replay lui-même (comme « Regarder » dans
+      l'historique) ; lancer le jeu à côté échouait quand le client était ouvert.
+    - Sinon : lancement direct du jeu (invite UAC : arrêt temporaire de Vanguard, voir tools/launch_replay.ps1).
+    Un fil vérifie ensuite que le replay a bien démarré (LAUNCH["error"] sinon)."""
+    from . import lcu
     d = clients.client_dir(patch)
     if not clients.installed(patch):
         raise RuntimeError(f"client {patch} non installé")
+    LAUNCH.update(state="launching", error=None, t=time.time())
+    if clients.is_main(patch) and lcu.running():
+        cfg = os.path.join(d, "Config")
+        if os.path.isdir(cfg):
+            clients.enable_replay_api(os.path.join(cfg, "game.cfg"))
+        err = lcu.watch(rofl, clients.CLEAN_SETTINGS, clients._game_running)
+        if err:
+            LAUNCH.update(state="error", error=f"{err} (ferme le client LoL et réessaie)")
+            raise RuntimeError(LAUNCH["error"])
+        LAUNCH["mode"] = "client"
+        threading.Thread(target=_check_started, daemon=True).start()
+        return "client"
+    LAUNCH["mode"] = "direct"
     clients.prepare_config(patch)
     script = os.path.join(TOOLS, "launch_replay.ps1")
     args = f"-NoProfile -ExecutionPolicy Bypass -File \"{script}\" -Rofl \"{rofl}\" -ClientDir \"{d}\""
     ps = f"Start-Process powershell -Verb RunAs -WindowStyle Hidden -ArgumentList '{args.replace(chr(39), chr(39) * 2)}'"
     subprocess.run(["powershell", "-NoProfile", "-Command", ps], check=True)
+    threading.Thread(target=_check_started, daemon=True).start()
+    return "direct"
+
+
+def _check_started(timeout=120):
+    """Le replay doit répondre (Replay API) dans les 2 min ; sinon message clair dans l'interface."""
+    end = time.time() + timeout
+    while time.time() < end:
+        if running():
+            LAUNCH.update(state="ok", error=None)
+            return
+        time.sleep(2)
+    if clients._game_running():
+        LAUNCH.update(state="error", error="le jeu est lancé mais la Replay API ne répond pas "
+                                           "(EnableReplayApi pas pris en compte ?)")
+    else:
+        LAUNCH.update(state="error", error="le replay ne s'est pas lancé (autorisation administrateur refusée, "
+                                           "ou client LoL qui bloque : ferme-le et réessaie)")
 
 
 def close_replay(timeout=20):
     """Ferme le jeu : demande au script de lancement (resté en veille, en admin) de le fermer ; il vérifie ensuite
     que Vanguard tourne. Les réglages du jeu principal sont remis par clients.restore_config à la fermeture."""
+    if LAUNCH.get("mode") == "client":  # lancé par le client LoL : pas en admin, on peut le fermer d'ici
+        kill()
+        end = time.time() + timeout
+        while time.time() < end and clients._game_running():
+            time.sleep(1)
+        return not clients._game_running()
     open(os.path.join(TOOLS, "close_replay.flag"), "w").close()
     end = time.time() + timeout
     while time.time() < end:

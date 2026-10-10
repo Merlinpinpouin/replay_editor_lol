@@ -2,7 +2,7 @@
 import json, mimetypes, os, re, threading, webbrowser
 from http.server import ThreadingHTTPServer, BaseHTTPRequestHandler
 from urllib.parse import parse_qs, unquote, urlparse
-from . import clients, game, music, pipeline, ranks, rofl
+from . import clients, game, lcu, music, pipeline, ranks, rofl
 from .paths import REPLAYS, RENDERS
 
 STATIC = os.path.join(os.path.dirname(__file__), "static")
@@ -111,7 +111,8 @@ class H(BaseHTTPRequestHandler):
                 if cur:
                     cur["installed"] = clients.installed(cur["patch"])
                     cur["main"] = clients.is_main(cur["patch"])
-                return self._json({"current": cur, "install": job, "game": game.running(), "pipeline": pipeline.STATE})
+                return self._json({"current": cur, "install": job, "game": game.running(), "pipeline": pipeline.STATE,
+                                   "launch": game.LAUNCH})
             if u.path == "/api/music":
                 return self._json(music.tracks())
             if u.path == "/api/settings":
@@ -178,8 +179,7 @@ class H(BaseHTTPRequestHandler):
                 return self._json(clients.install(CURRENT["info"]["version"]))
             if u.path == "/api/launch":
                 i = CURRENT["info"]
-                game.launch(i["path"], i["patch"])
-                return self._json({"ok": True})
+                return self._json({"ok": True, "mode": game.launch(i["path"], i["patch"])})
             if u.path == "/api/make":
                 body = json.loads(self._body() or b"{}")
                 num = lambda k: float(body[k]) if body.get(k) not in (None, "") else None
@@ -207,6 +207,8 @@ def main(open_browser=True):
     # fermeture du jeu s'il tourne encore
     if not clients.restore_config() and os.path.isdir(clients.BACKUP):
         threading.Thread(target=clients._restore_when_closed, args=(0,), daemon=True).start()
+    # réglages changés par le client LoL pendant un replay (appli fermée avant la fin) : remis si possible
+    threading.Thread(target=lcu.restore_settings, daemon=True).start()
     srv = Server(("127.0.0.1", PORT), H)
     print(f"lolclip : http://127.0.0.1:{PORT}", flush=True)
     if open_browser and not os.environ.get("LOLCLIP_NOBROWSER"):
