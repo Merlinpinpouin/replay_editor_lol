@@ -1,4 +1,7 @@
-# lolclip — éditeur de replays League of Legends
+# lolclip : éditeur de replays League of Legends
+
+> **Le développement continue dans [Server_web_symfo](https://github.com/Merlinpinpouin/Server_web_symfo), dossier `desktop/engine/`.**
+> Ce dépôt reste utilisable en l'état jusqu'à son archivage.
 
 Transforme un replay `.rofl` en clip monté automatiquement : repérage des champions, caméra cinématique ou vue du
 dessus, transitions « traversée du brouillard », encadré du joueur (rang, pseudo, champion), étalonnage, musique
